@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CGPA Calculator</title>
+<style>
+body{font-family:sans-serif;padding:12px;max-width:500px;margin:auto}
+.sem{border:1px solid #ccc;border-radius:8px;padding:10px;margin:10px 0}
+.row{display:flex;gap:6px;margin:4px 0}
+input,select{padding:6px;font-size:14px}
+.row input[type=text]{flex:2;min-width:0}
+.row input[type=number]{flex:1;min-width:0}
+button{padding:8px 12px;margin:4px 0}
+</style>
+</head>
+<body>
+<h2>CGPA Calculator</h2>
+<h3>Grade scale (edit if needed)</h3>
+<div id="scale"></div>
+<div id="sems"></div>
+<button onclick="addSem()">+ Add semester</button>
+<h2 id="cgpa">CGPA: -</h2>
+
+<div class="sem">
+  <b>Target CGPA</b><br>
+  <input type="number" id="tg" placeholder="Target CGPA" step="0.01">
+  <input type="number" id="nc" placeholder="Next sem credits">
+  <button onclick="target()">Check</button>
+  <p id="tres"></p>
+</div>
+
+<script>
+let scale={O:10,"A+":9,A:8,"B+":7,B:6,C:5};
+
+Object.keys(scale).forEach(g=>{
+  document.getElementById('scale').innerHTML +=
+  `${g} <input type="number" value="${scale[g]}" style="width:50px" oninput="scale['${g}']=+this.value;calc()"> `;
+});
+
+function addRow(sem){
+  const r=document.createElement('div');
+  r.className='row';
+  r.innerHTML=`<input type="text" placeholder="Subject">
+  <input type="number" placeholder="Credits" oninput="calc()">
+  <select onchange="calc()">${Object.keys(scale).map(g=>`<option>${g}</option>`).join('')}</select>`;
+  sem.querySelector('.rows').appendChild(r);
+}
+
+function addSem(){
+  const n=document.querySelectorAll('#sems .sem').length+1;
+  const d=document.createElement('div');
+  d.className='sem';
+  d.innerHTML=`<b>Semester ${n}</b><div class="rows"></div>
+  <button onclick="addRow(this.parentNode)">+ Subject</button>
+  <p class="sgpa">SGPA: -</p>`;
+  document.getElementById('sems').appendChild(d);
+  addRow(d);
+}
+
+function calc(){
+  let T=0,C=0;
+  document.querySelectorAll('#sems .sem').forEach(s=>{
+    let t=0,c=0;
+    s.querySelectorAll('.row').forEach(r=>{
+      const cr=parseFloat(r.children[1].value)||0;
+      t+=cr*scale[r.children[2].value];
+      c+=cr;
+    });
+    s.querySelector('.sgpa').textContent='SGPA: '+(c?(t/c).toFixed(2):'-');
+    T+=t;C+=c;
+  });
+  document.getElementById('cgpa').textContent='CGPA: '+(C?(T/C).toFixed(2):'-');
+  window.TP=T; window.TC=C;
+}
+
+function target(){
+  const tg=parseFloat(document.getElementById('tg').value);
+  const nc=parseFloat(document.getElementById('nc').value);
+  const out=document.getElementById('tres');
+  if(!tg||!nc||!window.TC){
+    out.textContent='Fill your semesters, target and credits first.';
+    return;
+  }
+  const need=(tg*(window.TC+nc)-window.TP)/nc;
+  if(need>10) out.textContent='Not possible next semester. Needs '+need.toFixed(2)+' SGPA (max is 10).';
+  else if(need<=0) out.textContent='You already meet this target!';
+  else out.textContent='You need an SGPA of '+need.toFixed(2)+' next semester.';
+}
+
+addSem();
+</script>
+</body>
+</html>
